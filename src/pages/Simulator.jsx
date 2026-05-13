@@ -94,9 +94,7 @@ export default function Simulator() {
   const categories = ['Prompt Injection', 'Jailbreak', 'System Prompt Leak', 'Social Engineering', 'Business Logic Bypass', 'Human Life Risk'];
   const aiModels = ['GPT-4', 'Gemini 1.5 Pro', 'Claude 3.5 Sonnet', 'Llama 3 (Local)'];
 
-  const presets = ATTACK_PRESETS.filter((p) =>
-    category === 'Jailbreak' ? p.category === 'Prompt Injection' : p.category === category
-  );
+  const presets = ATTACK_PRESETS.filter((p) => p.category === category);
 
   const runSimulation = async () => {
     if (!payload.trim()) return;
@@ -111,8 +109,35 @@ export default function Simulator() {
     // Step 2: Shield analyzes
     setTimeout(() => setStage(2), 400);
 
-    // Step 3: Result (Hitting the real Go Proxy API)
     const startTime = Date.now();
+
+    // If Shield is OFF — bypass firewall entirely, prompt goes straight to LLM unprotected
+    if (!shieldActive) {
+      await new Promise((r) => setTimeout(r, 600));
+      const latency = Date.now() - startTime;
+      setResult({
+        blocked: false,
+        confidence: 0,
+        latency: latency,
+        category: 'UNPROTECTED',
+        raw: {
+          status: 'PASSED',
+          blocked: false,
+          message: 'ShieldProxy INACTIVE — request forwarded to LLM without security screening',
+          shield_active: false,
+          category: 'UNPROTECTED',
+          confidence: 0,
+          latency_ms: latency,
+          target_model: targetModel,
+          warning: 'No heuristic analysis, no PII scrubbing, no output filtering applied',
+        }
+      });
+      setStage(3);
+      setSimState('done');
+      return;
+    }
+
+    // Shield is ON — hit the real Go Proxy API (full 4-phase pipeline)
     try {
       const response = await fetch('http://localhost:8080/v1/chat/completions', {
         method: 'POST',
@@ -141,7 +166,6 @@ export default function Simulator() {
       setStage(isBlocked ? 2 : 3);
     } catch (err) {
       console.error("Proxy connection failed:", err);
-      // Fallback if Go server is absolutely unreachable during demo
       setResult({
         blocked: true,
         confidence: 0,

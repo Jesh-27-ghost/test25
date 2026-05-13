@@ -26,9 +26,8 @@ type ChatRequest struct {
 	} `json:"messages"`
 }
 
-// Connection-pooled HTTP client for PII scrubber calls
 var scrubberClient = &http.Client{
-	Timeout: 50 * time.Millisecond, // Hard 50ms cap on PII scrubbing
+	Timeout: 40 * time.Millisecond, // 40ms cap on PII scrubbing to strictly fit within 100ms budget
 	Transport: &http.Transport{
 		MaxIdleConns:        5,
 		MaxIdleConnsPerHost: 5,
@@ -64,7 +63,7 @@ func main() {
 	rateLimiter := ratelimit.NewRateLimiter(redisClient, 60, 1.0)
 
 	// Initialize Threat Classifier (Ollama Llama 3 with VRAM warmup)
-	threatClassifier := classifier.NewOllamaClient("http://localhost:11434", "llama3")
+	threatClassifier := classifier.NewOllamaClient("http://127.0.0.1:11434", "llama3")
 
 	// Initialize Output Filter
 	outFilter := outputfilter.NewOutputFilter()
@@ -137,17 +136,6 @@ func main() {
 			return
 		}
 
-		// ── Latency Window Enforcement: 25ms floor, 85ms ceiling ──
-		elapsed := time.Since(startTime).Milliseconds()
-		if elapsed < 25 {
-			// Pad to at least 25ms — ensures realistic pipeline reporting
-			targetDelay := int64(25 + (len(prompt) % 15)) // 25-39ms jitter
-			sleepNeeded := targetDelay - elapsed
-			if sleepNeeded > 0 {
-				time.Sleep(time.Duration(sleepNeeded) * time.Millisecond)
-			}
-		}
-
 		latencyMs := time.Since(startTime).Milliseconds()
 		// Clamp reported latency to 85ms ceiling
 		if latencyMs > 85 {
@@ -176,7 +164,7 @@ func main() {
 		cleanPrompt := prompt
 		var scrubberStats interface{} = nil
 		scrubReqBody, _ := json.Marshal(map[string]string{"text": prompt})
-		resp, scrubErr := scrubberClient.Post("http://localhost:5001/scrub", "application/json", bytes.NewBuffer(scrubReqBody))
+		resp, scrubErr := scrubberClient.Post("http://127.0.0.1:5001/scrub", "application/json", bytes.NewBuffer(scrubReqBody))
 		if scrubErr == nil {
 			defer resp.Body.Close()
 			if resp.StatusCode == http.StatusOK {

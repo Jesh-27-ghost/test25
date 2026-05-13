@@ -50,63 +50,31 @@ export default function DashboardLayout() {
     }, 15000);
     return () => clearInterval(iv);
   }, [location.pathname]);
-
   return (
-    <div className="page-container">
-      {/* Sidebar */}
-      <aside className="sidebar">
-        <div style={{ marginBottom: '0.5rem' }}>
-          <div className="sidebar-logo">
-            <LogoIcon size={36} color="#00ff9d" />
-            <span className="sidebar-logo-text">ShieldProxy</span>
+    <div className="page-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '2rem' }}>
+      <div className="glass-window" style={{ width: '100%', maxWidth: '1400px', height: '85vh', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 10 }}>
+        {/* Top Bar inside glass window */}
+        <header className="topbar">
+          <div className="topbar-left">
+            <div className="sidebar-logo">
+              <LogoIcon size={28} color="var(--secondary-container)" />
+              <span className="sidebar-logo-text" style={{ fontSize: '1.2rem', color: 'var(--on-surface)' }}>ShieldProxy</span>
+            </div>
           </div>
-          <div className="label" style={{ color: 'var(--outline)', marginTop: '0.25rem', marginLeft: '0.25rem' }}>
-            Vanguard Level
-          </div>
-        </div>
 
-        <nav className="sidebar-nav">
-          {NAV_ITEMS.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
-                {item.icon}
-              </span>
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
+          <nav className="topbar-nav">
+            {NAV_ITEMS.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) => `topbar-nav-link${isActive ? ' active' : ''}`}
+              >
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
 
-        <button
-          className="btn btn-primary btn-shine"
-          style={{ width: '100%', marginTop: '1rem' }}
-          onClick={() => showToast('Deploying new Sentry node to the edge...')}
-        >
-          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>rocket_launch</span>
-          Deploy Sentry
-        </button>
-      </aside>
-
-      {/* Top Bar */}
-      <header className="topbar">
-        <div className="topbar-left">
-          <div className="pulse-dot-sm" />
-          <span className="label" style={{ color: 'var(--primary-container)' }}>Secure Orbit</span>
-          <span className="label" style={{ color: 'var(--outline)' }}>System Status:</span>
-          <span className="label" style={{ color: 'var(--primary-container)' }}>Online</span>
-        </div>
-
-        <div className="topbar-center">
-          <input
-            type="text"
-            className="topbar-search"
-            placeholder="QUERY NETWORK..."
-            onKeyDown={(e) => { if (e.key === 'Enter') showToast(`Searching network for: ${e.target.value}`) }}
-          />
-        </div>
+          {/* Topbar Center (Removed search, it can be added elsewhere if needed) */}
 
         <div className="topbar-right">
           <div style={{ position: 'relative' }}>
@@ -194,6 +162,8 @@ export default function DashboardLayout() {
       <main className="dashboard-content fade-in-up">
         <Outlet />
       </main>
+      
+      </div>
 
       {/* Profile Modal */}
       {isProfileModalOpen && (

@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import GlobeBackground from './GlobeBackground';
 
 export default function BackgroundEffects() {
   const particles = useMemo(() => {
@@ -21,6 +22,9 @@ export default function BackgroundEffects() {
       <div className="orb orb-1" />
       <div className="orb orb-2" />
       <div className="orb orb-3" />
+
+      {/* 3D Rotating Globe */}
+      <GlobeBackground />
 
       {/* Wave Lines */}
       <div className="wave-lines">

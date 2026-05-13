@@ -114,7 +114,7 @@ export default function Overview() {
   };
 
   // Merge and sort logs smoothly
-  const mixedFeed = [...realLogs, ...simLogs]
+  let mixedFeed = [...realLogs, ...simLogs]
     .map(log => ({
       ...log,
       unixTime: log.timestamp.includes('T') ? new Date(log.timestamp).getTime() : new Date().getTime() - Math.random() * 10000,
@@ -123,8 +123,27 @@ export default function Overview() {
       dispPrompt: log.prompt || log.source,
       dispStatus: log.verdict || log.status,
     }))
-    .sort((a, b) => b.unixTime - a.unixTime)
-    .slice(0, 15);
+    .sort((a, b) => b.unixTime - a.unixTime);
+
+  // Limit consecutive exact duplicates to 2
+  const dedupedFeed = [];
+  let consecutiveCount = 0;
+  let lastPrompt = null;
+  
+  for (const item of mixedFeed) {
+    if (item.dispPrompt === lastPrompt) {
+      consecutiveCount++;
+    } else {
+      lastPrompt = item.dispPrompt;
+      consecutiveCount = 1;
+    }
+    if (consecutiveCount <= 2) {
+      dedupedFeed.push(item);
+    }
+    if (dedupedFeed.length >= 15) break;
+  }
+
+  mixedFeed = dedupedFeed;
 
   return (
     <div className="fade-in-up">

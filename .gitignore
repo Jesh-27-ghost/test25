@@ -2,3 +2,11 @@ node_modules
 temp_repo
 __pycache__/
 *.exe
+*.pdb
+*.log
+.vercel
+.env*.local
+redis/
+dump.rdb
+test_out.txt
+dist/
