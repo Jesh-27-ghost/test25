@@ -395,17 +395,33 @@ export const ATTACK_PRESETS = [
 export function simulateAttack(payload, shieldActive, model = 'GPT-4') {
   const heuristics = localStorage.getItem('heuristics_level') || 'Aggressive';
   
-  let blockChance = 0.05;
+  let isBlocked = false;
+  let category = 'SAFE';
+  let confidence = rand(12, 35);
+
   if (shieldActive) {
-    if (heuristics === 'Paranoid') blockChance = 0.01;
-    else if (heuristics === 'Aggressive') blockChance = 0.05;
-    else blockChance = 0.15; // Standard
-  } else {
-    blockChance = 0.85;
+    const lowerPayload = payload.toLowerCase();
+    const suspiciousKeywords = ['ignore', 'override', 'bypass', 'hack', 'system prompt', 'password', 'token', 'exploit', 'malware', 'injection', 'jailbreak', 'kill', 'destroy', 'suicide', 'bomb'];
+    
+    // Check if it's a known attack or has suspicious keywords
+    const knownAttack = ATTACK_PRESETS.find(p => lowerPayload.includes(p.payload.toLowerCase().slice(0, 20)));
+    const hasSuspiciousKeywords = suspiciousKeywords.some(kw => lowerPayload.includes(kw));
+    
+    if (knownAttack) {
+      isBlocked = true;
+      category = knownAttack.category;
+      confidence = rand(88, 99);
+    } else if (hasSuspiciousKeywords && lowerPayload.length > 5) {
+      isBlocked = true;
+      category = pick(ATTACK_TYPES);
+      confidence = rand(75, 85);
+    } else {
+      isBlocked = false;
+      category = 'SAFE';
+      confidence = rand(12, 35);
+    }
   }
-  
-  const isBlocked = shieldActive ? Math.random() > blockChance : Math.random() > 0.85;
-  const category = pick(ATTACK_TYPES);
+
   // Tuned latency ranges — Llama 3 targets 25-85ms window
   let baseLatency = 45;
   if(model === 'GPT-4') baseLatency = 55;
@@ -418,7 +434,7 @@ export function simulateAttack(payload, shieldActive, model = 'GPT-4') {
   
   return {
     blocked: isBlocked,
-    confidence: isBlocked ? rand(88, 99) : rand(12, 35),
+    confidence: confidence,
     latency: lat,
     category,
     raw: {
@@ -427,9 +443,9 @@ export function simulateAttack(payload, shieldActive, model = 'GPT-4') {
       analysis_engine: 'sentinel-v4-neural',
       target_model: model,
       vector: category.toLowerCase().replace(/ /g, '_'),
-      confidence_score: (rand(88, 99) / 100).toFixed(3),
+      confidence_score: (confidence / 100).toFixed(3),
       processing_time_ms: lat,
-      heuristic_triggers: rand(3, 12),
+      heuristic_triggers: isBlocked ? rand(3, 12) : 0,
       payload_hash: generateApiKey().replace('sp_', ''),
       timestamp: new Date().toISOString(),
       node: 'ZURICH_VAULT_01',
