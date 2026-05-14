@@ -310,12 +310,15 @@ func FallbackClassify(prompt string) *Result {
 		}
 	}
 
-	// 5. Data Exfiltration & PII (Privacy)
+	// 5. Data Exfiltration & PII (Privacy) — require attack-intent context
 	dataPatterns := []string{
-		"database", "sql", "schema", "env", "credentials", "api key",
-		"secret_key", "token", "password", "config", "ssn", "aadhar",
-		"credit card", "cvv", "billing", "customer data", "private key",
-		".env", ".bashrc", ".aws/credentials",
+		"dump database", "dump the database", "show me the sql", "print schema",
+		"export credentials", "give me the api key", "show api key",
+		"secret_key", "show me the password", "dump password", "give me password",
+		"show config file", "print config", "show ssn", "aadhar number",
+		"credit card number", "show cvv", "dump customer data", "private key",
+		"cat .env", "cat .bashrc", ".aws/credentials", "extract credentials",
+		"exfiltrate", "steal data", "leak data",
 	}
 	for _, p := range dataPatterns {
 		if strings.Contains(lp, p) {
@@ -368,11 +371,12 @@ func FallbackClassify(prompt string) *Result {
 		}
 	}
 
-	// 9. Social Engineering (Manipulation)
+	// 9. Social Engineering (Manipulation) — require phishing-style context
 	socialPatterns := []string{
-		"urgent", "emergency", "important update", "maintenance",
-		"it support", "verify account", "security breach",
-		"unauthorized access", "confirmed identity", "official request",
+		"urgent action required", "emergency access", "important update click",
+		"i am from it support", "verify your account", "security breach detected",
+		"unauthorized access detected", "confirmed identity", "official request from",
+		"click here immediately", "account will be suspended",
 	}
 	for _, p := range socialPatterns {
 		if strings.Contains(lp, p) {
@@ -380,11 +384,11 @@ func FallbackClassify(prompt string) *Result {
 		}
 	}
 
-	// 10. Logic & Format Attacks (Breaking the LLM)
+	// 10. Logic & Format Attacks (Breaking the LLM) — only specific exploit patterns
 	logicPatterns := []string{
-		"---", "===", "stop", "end", "quit", "restart",
-		"[end of prompt]", "\\0", "null", "undefined", "nan",
-		"infinity loop", "token limit", "empty response",
+		"[end of prompt]", "\\x00", "\\0\\0\\0",
+		"infinity loop", "cause infinite loop", "trigger empty response",
+		"break the parser", "crash the system", "overflow the buffer",
 	}
 	for _, p := range logicPatterns {
 		if strings.Contains(lp, strings.ToLower(p)) {

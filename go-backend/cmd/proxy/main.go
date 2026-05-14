@@ -137,10 +137,6 @@ func main() {
 		}
 
 		latencyMs := time.Since(startTime).Milliseconds()
-		// Clamp reported latency to 85ms ceiling
-		if latencyMs > 85 {
-			latencyMs = 85
-		}
 
 		// 5. BLOCK path — respond immediately, skip PII scrubbing entirely
 		w.Header().Set("Content-Type", "application/json")
@@ -199,10 +195,6 @@ func main() {
 		}
 
 		latencyMs = time.Since(startTime).Milliseconds()
-		// Clamp reported latency to 85ms ceiling
-		if latencyMs > 85 {
-			latencyMs = 85
-		}
 		log.Printf("[PASS] Pipeline complete in %dms (target: 25-85ms)", latencyMs)
 
 		// Fire audit async (don't block response)
