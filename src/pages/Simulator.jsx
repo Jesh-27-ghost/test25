@@ -138,9 +138,13 @@ export default function Simulator() {
     }
 
     // Shield is ON — hit the real Go Proxy API (full 4-phase pipeline)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 150); // Strict 150ms timeout to prevent 2s browser hangs
+
     try {
       const response = await fetch('http://localhost:8080/v1/chat/completions', {
         method: 'POST',
+        signal: controller.signal,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer sim_key_123',
@@ -149,6 +153,8 @@ export default function Simulator() {
           messages: [{ role: 'user', content: payload }]
         })
       });
+
+      clearTimeout(timeoutId);
 
       const latency = Date.now() - startTime;
       const data = await response.json();
@@ -171,7 +177,7 @@ export default function Simulator() {
         confidence: 0,
         latency: Date.now() - startTime,
         category: 'CONNECTION_REFUSED',
-        raw: { error: "Failed to connect to local Go firewall on port 8080", details: err.message }
+        raw: { error: "Failed to connect to local Go firewall on port 8080", details: err.message, note: err.name === 'AbortError' ? "Strict 150ms SLA timeout exceeded" : "Connection Refused" }
       });
       setStage(2);
     }
